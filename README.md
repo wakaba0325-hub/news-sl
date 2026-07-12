@@ -30,3 +30,21 @@ for batch in ...:
     n_new = cp.flush(batch)
 nsl.build_l2("prtimes")  # run完了時に1回だけ
 ```
+
+## L3: news_master (全ソース統合・company_master突合・新規掲載検知)
+
+`python -m news_sl.build_l3 [--apply]` (実行は別リポ `news-master-consolidate` から)で:
+
+- `master/news_sources/<source>/{最新}/<source>.csv` を全ソースunion(現状`prtimes`のみ)
+- `company_name` を `company_master` の `商号_nor` と同一規則(`news_sl/l3.py` の `core_key`。
+  `job_sl/l3.py`と同じcore-normパッケージのvendor版)で正規化して法人番号突合
+- 同名複数がヒットする場合は以下を順に試して一意化:
+  1. 処理区分(国税庁法人番号データ)が閉鎖・取消系の候補を除外
+  2. なお複数残れば、`body_snippet`(プレスリリース冒頭の「本社：東京都〜」等の
+     自己紹介文)から都道府県を抽出し本店所在都道府県が一致する候補に絞り込み
+     (求人のlocationに相当する構造化フィールドがニュースには無いため代用)
+  3. 完全未マッチの場合のみ、注記・拠点表記を除去して再突合
+  - 解決できなければ `is_ambiguous_company=1`(法人番号は空)のまま
+  - 採用した解決方法は `match_method` 列に記録
+- `article_url` を前回 `news_master` と比較し `first_seen_date` / `is_new_today` を付与
+- `master/news_master/{YYYYMMDD}/news_master.csv` へスナップショット型で書込(全件洗い替え)
