@@ -28,7 +28,7 @@ from . import l3
 
 csv.field_size_limit(10**7)
 
-SOURCES = ["prtimes"]
+SOURCES = ["prtimes", "atpress"]
 L2_PREFIX = "master/news_sources/"
 CM_PREFIX = "master/company_master/"
 CM_FILE = "company_master.csv"
